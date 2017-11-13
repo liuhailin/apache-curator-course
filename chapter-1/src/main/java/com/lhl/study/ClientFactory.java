@@ -4,6 +4,7 @@ import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.apache.zookeeper.CreateMode;
 
 /**
  * @author Liu Hailin
@@ -36,35 +37,35 @@ public class ClientFactory {
         return new Builder();
     }
 
-    public CuratorFramework produceClient() {
+    private CuratorFramework produceClient() {
         CuratorFramework client = CuratorFrameworkFactory.builder().connectString( this.serverString ).retryPolicy(
             defaultPolicy ).connectionTimeoutMs( this.connectionTimeOut ).sessionTimeoutMs(
             this.sessionTimeOut ).build();
         return client;
     }
 
-    public CuratorFramework produceClientSimple() {
+    private CuratorFramework produceClientSimple() {
         CuratorFramework client = CuratorFrameworkFactory.newClient( this.serverString,this.sessionTimeOut,this.connectionTimeOut,defaultPolicy );
         return client;
     }
 
-    static class Builder {
+    public static class Builder {
 
         private String serverString;
         private int connectionTimeOut;
         private int sessionTimeOut;
 
-        public Builder setServerString(String serverString) {
+        public Builder serverString(String serverString) {
             this.serverString = serverString;
             return this;
         }
 
-        public Builder setConnectionTimeOut(int connectionTimeOut) {
+        public Builder connectionTimeOut(int connectionTimeOut) {
             this.connectionTimeOut = connectionTimeOut;
             return this;
         }
 
-        public Builder setSessionTimeOut(int sessionTimeOut) {
+        public Builder sessionTimeOut(int sessionTimeOut) {
             this.sessionTimeOut = sessionTimeOut;
             return this;
         }
@@ -73,5 +74,16 @@ public class ClientFactory {
             ClientFactory factory = new ClientFactory( this );
             return factory.produceClient();
         }
+    }
+
+    public static void main(String[] args) throws Exception {
+        CuratorFramework client = ClientFactory.builder().serverString( "localhost:2181" ).connectionTimeOut( 30000 ).sessionTimeOut( 3000 ).build();
+
+        client.start();
+
+        client.blockUntilConnected();
+
+        client.create().forPath( "/test" );
+
     }
 }
